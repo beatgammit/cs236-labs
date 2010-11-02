@@ -64,6 +64,7 @@ public class Lab4 {
 
 	/**
 	 * Evaluates the Queries.  Must be called after it's done parsing.
+	 * @param dp the DatalogProgram to evaluate
 	 * @return a formatted String of the results of evaluation
 	 */
 	public static String evaluateQueries(DatalogProgram dp){

@@ -153,6 +153,14 @@ public class Parameter implements Comparable<Parameter>{
 			return this.getName();
 	}
 
+	/**
+	 * Compares two Parameter objects.
+	 *
+	 * If both Parameters have a value or both have only a name, String's compareTo method is used.
+	 * If the Parameters don't have corresponding data, then the IDENT is preferred over the STRING.
+	 * @param o the Parameter to compare to
+	 * @return 1 if this is greater than the o, -1 if this is less than o
+	 */
 	public int compareTo(Parameter o) {
 		if(this.getValue() != null && o.getValue() != null){
 			return this.getValue().compareTo(o.getValue());

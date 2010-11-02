@@ -95,6 +95,10 @@ public class DatalogProgram implements Runnable {
 		return this.rules;
 	}
 
+	/**
+	 * Gets the List of Query objects associated with this DatalogProgram.
+	 * @return a List of Query objects
+	 */
 	public List<Query> getQueryList(){
 		return this.queries;
 	}

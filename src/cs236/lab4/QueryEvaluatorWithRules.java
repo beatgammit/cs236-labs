@@ -39,8 +39,9 @@ import java.util.TreeSet;
  */
 public class QueryEvaluatorWithRules extends QueryEvaluator {
 	// this way we don't have to evaluate the same rules over and over again
-	private SortedSet<Predicate> falseRules = new TreeSet<Predicate>();
-	private SortedSet<Predicate> trueRules = new TreeSet<Predicate>();
+	private SortedSet<Rule> truePredicates = new TreeSet<Rule>();
+	private SortedSet<Rule> failedPredicate = new TreeSet<Rule>();
+	private SortedSet<Rule> pendingRules = new TreeSet<Rule>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
@@ -57,23 +58,31 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 	@Override
 	public boolean validateUsingRules(Predicate tQuery){
 		for(Rule tRule : this.getRuleList()){
-			List<Predicate> solutions = new ArrayList<Predicate>();
 			// duplicate the Rule so we don't do anything stupid
 			Rule tDuplicate = tRule.duplicate();
-			// this will assign values to all identifiers in the Rule
-			if(unify(tQuery, tDuplicate)){
+			// check to see if we actually need to process this predicate
+			if(unify(tQuery, tDuplicate)){// this will assign values to all identifiers in the Rule
 				tDuplicate.propagateBoundVariables();
 
+				if(this.failedPredicate.contains(tDuplicate)){
+					return false;
+				}else if(this.truePredicates.contains(tDuplicate)){
+					return true;
+				}else if(this.pendingRules.contains(tDuplicate)){
+					return false;
+				}
+
+				this.pendingRules.add(tDuplicate.duplicate());
+				
 				// now let's worry about the predicates
 				SortedSet<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
 				Parameter[] tParamArray = freeVariables.toArray(new Parameter[freeVariables.size()]);
 				if(allResolve(0, tParamArray, tDuplicate.getPredicateList())){
+					this.truePredicates.add(tDuplicate.duplicate());
 					return true;
+				}else{
+					this.failedPredicate.add(tDuplicate.duplicate());
 				}
-				//for(Predicate tPred : tRule.getPredicateList()){
-				//	this.evaluateQuery(tPred);
-				//}
-				return false;
 			}
 		}
 		return false;

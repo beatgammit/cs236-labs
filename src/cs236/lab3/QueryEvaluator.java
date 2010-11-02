@@ -46,8 +46,14 @@ public class QueryEvaluator implements Runnable{
 
 	private AtomicBoolean bFinished;
 
+	/**
+	 * This should never be used.  It is required for subclasses to be able to inherit.
+	 */
 	protected QueryEvaluator(){
-		
+		this.datalog = null;
+		this.query = null;
+		this.solutions = null;
+		this.bFinished = null;
 	}
 	/**
 	 * Creates a new QueryEvaluator object.  This will not change the Query or the DatalogProgram.
@@ -120,6 +126,10 @@ public class QueryEvaluator implements Runnable{
 		return false;
 	}
 
+	/**
+	 * Adds a Predicate to the list of positive solutions to this Query.
+	 * @param tPred
+	 */
 	protected void addSolution(Predicate tPred){
 		this.solutions.add(tPred);
 	}

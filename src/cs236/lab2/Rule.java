@@ -32,7 +32,7 @@ import java.util.TreeSet;
  * A Rule is used to evaluate a Query when there are no Facts that directly satisfy a Query.
  * @author jameson
  */
-public class Rule extends Predicate{
+public class Rule extends Predicate implements Comparable<Predicate>{
 	private List<Predicate> predicateList;
 	/**
 	 * Creates a new Rule with a name and a list of Parameters.
@@ -61,6 +61,10 @@ public class Rule extends Predicate{
 		return this.predicateList;
 	}
 
+	/**
+	 * Returns a SortedSet of all of the free variables in this Rule.
+	 * @return a SortedSet of Parameters
+	 */
 	public SortedSet<Parameter> getSetOfUnboundParameters(){
 		SortedSet<Parameter> tSet = new TreeSet<Parameter>();
 		for(Predicate p : this.getPredicateList()){
@@ -90,13 +94,23 @@ public class Rule extends Predicate{
 		Rule tRule = new Rule(new String(this.getValue()), new ArrayList<Parameter>());
 		for(Parameter tParam : this){
 			tRule.add(tParam.duplicate());
-			for(Predicate tPredicate : this.predicateList){
-				tRule.addPredicate(tPredicate.duplicate());
-			}
+		}
+		for(Predicate tPredicate : this.predicateList){
+			tRule.addPredicate(tPredicate.duplicate());
 		}
 		return tRule;
 	}
 
+	/**
+	 * Override's Object's equals method.
+	 *
+	 * A Rule is equal to another Rule if:
+	 * - Predicate's equals method returns true
+	 * - they have the same number of Parameters
+	 * - each Parameter is equal to its counterpart through Parameter's equals method
+	 * @param obj
+	 * @return true if they are equal or false if they are not
+	 */
 	@Override
 	public boolean equals(Object obj){
 		if(obj instanceof Rule && super.equals(obj))
@@ -115,6 +129,11 @@ public class Rule extends Predicate{
 		return false;
 	}
 
+	/**
+	 * Override's Object's hashCode method.
+	 * This really isn't used but NetBeans complains if it is not overridden and equals is.
+	 * @return
+	 */
 	@Override
 	public int hashCode() {
 		int hash = 5;
@@ -139,5 +158,52 @@ public class Rule extends Predicate{
 
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Override's Predicate's compareTo method unless the parameter passed really is a Predicate.
+	 * This allows both Rule and Predicate to have unique compareTo methods.
+	 * This method just calls compareTo(Rule) if the Predicate passed is a Rule reference.
+	 * @param o
+	 * @return
+	 */
+	@Override
+	public int compareTo(Predicate o){
+		if(o instanceof Rule){
+			return compareTo((Rule)o);
+		}
+		return super.compareTo(o);
+	}
+
+	/**
+	 * Compares this Rule instance to another Rule instance.
+	 *
+	 * A Rule is greater than another Rule if:
+	 * - it is greater than the other according to Predicate's compareTo method
+	 * - a Predicates is greater than it's corresponding Predicate according to Predicate's compareTo
+	 * @param o the Rule to compare against this instance
+	 * @return 1 if this instance is greater, -1 if it is lesser, and 0 if they are equal
+	 */
+	public int compareTo(Rule o) {
+		if(super.compareTo(o) == 0){
+			int i = 0;
+			List<Predicate> pThisList = this.getPredicateList();
+			List<Predicate> pThatList = o.getPredicateList();
+			for(; i < pThisList.size() && i < pThatList.size(); i++){
+				Predicate pThis = pThisList.get(i);
+				Predicate pThat = pThatList.get(i);
+				if(!pThis.equals(pThat)){
+					return pThis.compareTo(pThat);
+				}
+			}
+			if(pThisList.size() > i){
+				return 1;
+			}else if(pThatList.size() > i){
+				return -1;
+			}
+			return 0;
+		}else{
+			return super.compareTo(o);
+		}
 	}
 }
