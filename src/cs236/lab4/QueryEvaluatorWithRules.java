@@ -21,7 +21,6 @@
 
 package cs236.lab4;
 
-import cs236.lab1.TokenType;
 import cs236.lab2.DatalogProgram;
 import cs236.lab2.Parameter;
 import cs236.lab2.Predicate;
@@ -82,19 +81,16 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 				}
 				if(pendingPredicates.contains(predicate)){
 					bPass = false;
+					pendingPredicates.remove(predicate);
 					break;
 				}
 				pendingPredicates.add(predicate.duplicate());
 				if(!factExists(predicate) && !validateUsingRules(predicate)){
 					bPass = false;
+					pendingPredicates.remove(predicate);
 					break;
 				}
 				pendingPredicates.remove(predicate);
-
-				// it isn't really necessary to set all of these to null, that will just take time
-//				for(Parameter p : freeVars){
-//					predicate.bind(p.getName(), null);
-//				}
 			}
 			return bPass;
 		}else{
