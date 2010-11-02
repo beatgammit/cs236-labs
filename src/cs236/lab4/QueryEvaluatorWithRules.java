@@ -28,7 +28,6 @@ import cs236.lab2.Predicate;
 import cs236.lab2.Query;
 import cs236.lab2.Rule;
 import cs236.lab3.QueryEvaluator;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
