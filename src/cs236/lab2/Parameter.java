@@ -106,6 +106,9 @@ public class Parameter {
 
 	/**
 	 * Overrides Object's equals for Parameter objects.  It returns false if it's not a Parameter.
+	 * 
+	 * If this Parameter is a constant, then it will compare the values of both Parameters.
+	 * If this Parameter is a variable, then it will compare the names of both Parameters.
 	 * @param obj the Object to be compared
 	 * @return true if they are the same value (not reference) or false otherwise
 	 */
@@ -114,12 +117,11 @@ public class Parameter {
 		if(obj instanceof Parameter){
 			Parameter tParam = (Parameter)obj;
 
-			String tName = tParam.getName();
-			String tValue = tParam.getValue();
-			if(tName != null){
-				return tName.equals(this.getName());
-			}else if(tValue != null){
-				return tValue.equals(this.getName());
+			if(tParam.getTokenType() == TokenType.STRING){
+				return tParam.getValue().equals(this.getValue());
+			}
+			else if(tParam.getTokenType() == TokenType.IDENT){
+				return tParam.getName().equals(this.getName());
 			}
 		}
 		return false;

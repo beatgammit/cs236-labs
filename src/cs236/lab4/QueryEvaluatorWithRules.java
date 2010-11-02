@@ -24,9 +24,11 @@ package cs236.lab4;
 import cs236.lab1.TokenType;
 import cs236.lab2.DatalogProgram;
 import cs236.lab2.Parameter;
+import cs236.lab2.Predicate;
 import cs236.lab2.Query;
 import cs236.lab2.Rule;
 import cs236.lab3.QueryEvaluator;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +36,11 @@ import java.util.List;
  * @author T. Jameson Little
  */
 public class QueryEvaluatorWithRules extends QueryEvaluator {
+	/**
+	 * Calls the super constructor in QueryEvaluator.
+	 * @param tQuery the Query to be evaluated
+	 * @param dp the DatalogProgram to evaluate the query against
+	 */
 	public QueryEvaluatorWithRules(Query tQuery, DatalogProgram dp){
 		super(tQuery, dp);
 	}
@@ -43,30 +50,40 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 	 * @return whether we a Rule exists that validates the Query
 	 */
 	@Override
-	public boolean validateUsingRules(Query tQuery){
+	public boolean validateUsingRules(Predicate tQuery){
 		for(Rule tRule : this.getRuleList()){
+			List<Predicate> solutions = new ArrayList<Predicate>();
+			// duplicate the Rule so we don't do anything stupid
 			Rule tDuplicate = tRule.duplicate();
 			if(unify(tQuery, tDuplicate)){
+				tDuplicate.propagateBoundVariables();
+				for(Predicate tPred : tRule.getPredicateList()){
+					this.evaluateQuery(tPred);
+				}
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean unify(Query tQuery, Rule tRule){
-		if(tQuery.size() == tRule.size() && tRule.getValue().equals(tRule.getValue())){
+	/**
+	 * Unifies a Predicate with a Rule.  If it fails, then it will return false.
+	 * @param tQuery the Query to unify (won't be modified)
+	 * @param tRule the Rule to unify (will be modified)
+	 * @return true if successful, false if unsuccessful
+	 */
+	private boolean unify(Predicate tQuery, Rule tRule){
+		if(tQuery.size() == tRule.size() && tQuery.getValue().equals(tRule.getValue())){
 			for(int i = 0; i < tQuery.size(); i++){
 				Parameter tRuleParam = tRule.get(i);
 				Parameter tQueryParam = tQuery.get(i);
-				// if the Rule parameter is a variable, but the Query parameter is a constant, substitute
-				if(tRuleParam.getTokenType() == TokenType.IDENT &&
-						tQueryParam.getTokenType() == TokenType.STRING){
+				// if the Rule parameter is a variable, assign the Query parameter's value
+				if(tRuleParam.getTokenType() == TokenType.IDENT){
+					// it doesn't matter whether the Query parameter is a constant or a variable
 					tRuleParam.setValue(tQueryParam.getValue());
 				}else if(tRuleParam.getTokenType() == TokenType.STRING &&
-						tQueryParam.getTokenType() == TokenType.STRING &&
-						tRuleParam.getValue().equals(tQueryParam.getValue())){
-						continue;
-				}else{
+						!tRuleParam.getValue().equals(tQueryParam.getValue())){
+					// if both are constants, but they are not equal, no unification possible
 					return false;
 				}
 			}

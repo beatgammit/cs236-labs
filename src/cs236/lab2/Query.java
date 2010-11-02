@@ -40,22 +40,6 @@ public class Query extends Predicate{
 		this.addAll(tParamList);
 	}
 
-	/**
-	 * Checks to see if there are any paramters that are the same (using the equals method).
-	 * This checks to make sure the reference isn't the same.
-	 * @param tParam the Parameter to compare
-	 * @return the index of the similar Parameter or -1 if nothing was found.
-	 */
-	public int findSimilar(Parameter tParam){
-		for(int i = 0; i < this.size(); i++){
-			Parameter p = this.get(i);
-			if(tParam != p && p.equals(tParam)){
-				return i;
-			}
-		}
-		return -1;
-	}
-
 	@Override
 	public Query duplicate(){
 		Query p = new Query(new String(this.getValue()), new ArrayList<Parameter>());

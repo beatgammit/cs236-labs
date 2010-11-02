@@ -49,6 +49,14 @@ public class Predicate extends ArrayList<Parameter>{
 		return this.value;
 	}
 
+	public void bind(String tName, String tValue){
+		for(Parameter p : this){
+			if(p.getName().equals(tName)){
+				p.setValue(tValue);
+			}
+		}
+	}
+
 	/**
 	 * Duplicates this Predicate.  This is a deep duplication so it creates new objects.
 	 * @return a copy of this Predicate
@@ -72,6 +80,46 @@ public class Predicate extends ArrayList<Parameter>{
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Checks to see if there are any parameters that are the same (using the equals method).
+	 * This checks to make sure the reference isn't the same.
+	 * @param tParam the Parameter to compare
+	 * @return the index of the similar Parameter or -1 if nothing was found.
+	 */
+	public int findSimilar(Parameter tParam){
+		for(int i = 0; i < this.size(); i++){
+			Parameter p = this.get(i);
+			if(tParam != p && p.equals(tParam)){
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	@Override
+	public boolean equals(Object obj){
+		if(obj instanceof Predicate){
+			Predicate tPredicate = (Predicate)obj;
+			if(!this.getValue().equals(tPredicate.getValue()) || this.size() != tPredicate.size()){
+				return false;
+			}
+			
+			for(int i = 0; i < tPredicate.size(); i++){
+				if(!tPredicate.get(i).equals(this.get(i))){
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 3;
+		hash = 83 * hash + (this.value != null ? this.value.hashCode() : 0);
+		return hash;
 	}
 
 	/**

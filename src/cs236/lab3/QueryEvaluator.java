@@ -65,16 +65,26 @@ public class QueryEvaluator implements Runnable{
 	}
 
 	/**
+	 * Returns the List of Predicates that successfully unified with the Facts.
+	 * This is done through recursively modifying the parameters in the Query until a match is found.
+	 * @param tQuery
+	 * @return
+	 */
+	protected List<Predicate> evaluateQuery(Predicate tQuery){
+		evaluateQuery(0, tQuery);
+		return this.solutions;
+	}
+	/**
 	 * Evaluates the Query by recursively modifying the Parameters.
 	 * Please pass in a duplicate if you don't want me to modify your data.
 	 * @param iPos the position in the list of Parameters of the Query
 	 * @param tQuery a reference to a Query object we can manipulate
 	 */
-	public void evaluateQuery(int iPos, Query tQuery){
+	private void evaluateQuery(int iPos, Predicate tQuery){
 		if(iPos == query.size()){
 			// add it to some kind of a list
 			if(factExists(tQuery) || validateUsingRules(tQuery)){
-				this.solutions.add(tQuery.duplicate());
+				addSolution(tQuery.duplicate());
 			}
 		}else{
 			Parameter tParam = tQuery.get(iPos);
@@ -106,8 +116,12 @@ public class QueryEvaluator implements Runnable{
 	 * @param tQuery the Query to evaluate
 	 * @return false (we don't evaluate rules in this class)
 	 */
-	public boolean validateUsingRules(Query tQuery){
+	public boolean validateUsingRules(Predicate tQuery){
 		return false;
+	}
+
+	protected void addSolution(Predicate tPred){
+		this.solutions.add(tPred);
 	}
 
 	/**

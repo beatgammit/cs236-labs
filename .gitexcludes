@@ -1,0 +1,8 @@
+build/*
+test/*
+src/cs236/lab1/.svn
+src/cs236/lab2/.svn
+src/cs236/lab3/.svn
+src/cs236/lab4/.svn
+src/cs236/lab5/.svn
+src/cs236/lab6/.svn

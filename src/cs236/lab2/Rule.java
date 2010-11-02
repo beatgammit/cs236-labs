@@ -50,6 +50,26 @@ public class Rule extends Predicate{
 		this.predicateList.add(tPredicate);
 	}
 
+	/**
+	 * Gets the List of Predicates that this Rule contains.
+	 * @return a List of Predicates
+	 */
+	public List<Predicate> getPredicateList(){
+		return this.predicateList;
+	}
+
+	/**
+	 * This will propagate all of the bound variables to the other predicates in this Rule.
+	 * This calls Predicate's bind method for each Parameter in this Rule.
+	 */
+	public void propagateBoundVariables(){
+		for(Parameter p : this){
+			for(Predicate tPred : this.predicateList){
+				tPred.bind(p.getName(), p.getValue());
+			}
+		}
+	}
+
 	@Override
 	public Rule duplicate(){
 		Rule tRule = new Rule(new String(this.getValue()), new ArrayList<Parameter>());
@@ -62,6 +82,30 @@ public class Rule extends Predicate{
 		return tRule;
 	}
 
+	@Override
+	public boolean equals(Object obj){
+		if(obj instanceof Rule && super.equals(obj))
+		{
+			Rule tRule = (Rule)obj;
+			if(tRule.predicateList.size() != this.predicateList.size()){
+				return false;
+			}
+			
+			for(int i = 0; i < this.predicateList.size(); i++){
+				if(!tRule.predicateList.get(i).equals(this.predicateList.get(i))){
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 5;
+		hash = 59 * hash + (this.predicateList != null ? this.predicateList.hashCode() : 0);
+		return hash;
+	}
 
 	/**
 	 * Returns a formatted String with this pattern- Name(Param,Param...) :- Predicate,Predicate...
