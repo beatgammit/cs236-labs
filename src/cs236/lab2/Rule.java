@@ -132,12 +132,14 @@ public class Rule extends Predicate implements Comparable<Predicate>{
 	/**
 	 * Override's Object's hashCode method.
 	 * This really isn't used but NetBeans complains if it is not overridden and equals is.
-	 * @return
+	 * @return an integer hashCode
 	 */
 	@Override
 	public int hashCode() {
-		int hash = 5;
-		hash = 59 * hash + (this.predicateList != null ? this.predicateList.hashCode() : 0);
+		final int HASH_INITIAL = 5;
+		final int SALT = 59;
+		int hash = HASH_INITIAL;
+		hash = SALT * hash + (this.predicateList != null ? this.predicateList.hashCode() : 0);
 		return hash;
 	}
 
@@ -165,7 +167,7 @@ public class Rule extends Predicate implements Comparable<Predicate>{
 	 * This allows both Rule and Predicate to have unique compareTo methods.
 	 * This method just calls compareTo(Rule) if the Predicate passed is a Rule reference.
 	 * @param o
-	 * @return
+	 * @return 1 if greater, -1 if less than, and 0 if equal
 	 */
 	@Override
 	public int compareTo(Predicate o){

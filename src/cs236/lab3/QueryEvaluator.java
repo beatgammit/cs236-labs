@@ -73,7 +73,7 @@ public class QueryEvaluator implements Runnable{
 	 * Returns the List of Predicates that successfully unified with the Facts.
 	 * This is done through recursively modifying the parameters in the Query until a match is found.
 	 * @param tQuery
-	 * @return
+	 * @return the List of Predicates that resolve this Query
 	 */
 	protected List<Predicate> evaluateQuery(Predicate tQuery){
 		evaluateQuery(0, tQuery);

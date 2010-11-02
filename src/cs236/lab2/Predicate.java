@@ -133,8 +133,10 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 */
 	@Override
 	public int hashCode() {
-		int hash = 3;
-		hash = 83 * hash + (this.value != null ? this.value.hashCode() : 0);
+		final int HASH_INITIAL = 3;
+		final int SALT = 83;
+		int hash = HASH_INITIAL;
+		hash = SALT * hash + (this.value != null ? this.value.hashCode() : 0);
 		return hash;
 	}
 
