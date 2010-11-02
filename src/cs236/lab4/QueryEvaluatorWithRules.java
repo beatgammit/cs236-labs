@@ -116,23 +116,27 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 	 * @return true if successful, false if unsuccessful
 	 */
 	private boolean unify(Predicate tQuery, Rule tRule){
-		if(tQuery.size() == tRule.size() && tQuery.getValue().equals(tRule.getValue())){
-			for(int i = 0; i < tQuery.size(); i++){
-				Parameter tRuleParam = tRule.get(i);
-				Parameter tQueryParam = tQuery.get(i);
-				// if the Rule parameter is a variable, assign the Query parameter's value
-				if(tRuleParam.getTokenType() == TokenType.IDENT){
-					// it doesn't matter whether the Query parameter is a constant or a variable
-					tRuleParam.setValue(tQueryParam.getValue());
-				}else if(tRuleParam.getTokenType() == TokenType.STRING &&
-						!tRuleParam.getValue().equals(tQueryParam.getValue())){
-					// if both are constants, but they are not equal, no unification possible
+		if(tQuery.size() != tRule.size() || !tQuery.getValue().equals(tRule.getValue())){
+			return false;
+		}
+		for(int i = 0; i < tQuery.size(); i++){
+			Parameter tRuleParam = tRule.get(i);
+			Parameter tQueryParam = tQuery.get(i);
+
+			// if we have an identifier, check to see if we have any other similar identifiers
+			if(tRuleParam.getName() != null){
+				String tValue = tRule.findValue(tRuleParam.getName());
+				// if we have a similar Parameter, but the value doesn't match the Query param, discard
+				if(tValue != null && !tValue.equals(tQueryParam.getValue())){
 					return false;
 				}
+				tRuleParam.setValue(tQueryParam.getValue());
+			}else{
+				if(!tRuleParam.getValue().equals(tQueryParam.getValue()))
+					return false;
 			}
-			return true;
 		}
-		return false;
+		return true;
 	}
 
 	/**

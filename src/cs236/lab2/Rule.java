@@ -130,6 +130,20 @@ public class Rule extends Predicate implements Comparable<Predicate>{
 	}
 
 	/**
+	 * Checks to see if there are any parameters that have the same name.  If so, we return the value.
+	 * @param tParam the Parameter to compare
+	 * @return the value of the matched Parameter or null if none found
+	 */
+	public String findValue(String name){
+		for(int i = 0; i < this.size(); i++){
+			Parameter p = this.get(i);
+			if(p.getName() != null && p.getName().equals(name)){
+				return p.getValue();
+			}
+		}
+		return null;
+	}
+	/**
 	 * Override's Object's hashCode method.
 	 * This really isn't used but NetBeans complains if it is not overridden and equals is.
 	 * @return an integer hashCode
