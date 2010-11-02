@@ -57,10 +57,10 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 			Rule tDuplicate = tRule.duplicate();
 			if(unify(tQuery, tDuplicate)){
 				tDuplicate.propagateBoundVariables();
-				for(Predicate tPred : tRule.getPredicateList()){
-					this.evaluateQuery(tPred);
-				}
-				return true;
+				//for(Predicate tPred : tRule.getPredicateList()){
+				//	this.evaluateQuery(tPred);
+				//}
+				return true;// hi dude!!
 			}
 		}
 		return false;
