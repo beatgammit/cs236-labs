@@ -27,7 +27,6 @@ import cs236.lab2.Fact;
 import cs236.lab2.Parameter;
 import cs236.lab2.Predicate;
 import cs236.lab2.Query;
-import cs236.lab2.Rule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
