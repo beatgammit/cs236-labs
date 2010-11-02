@@ -82,7 +82,10 @@ public class DatalogProgram implements Runnable {
 	 * @return a reference to a List<Fact>
 	 */
 	public List<Fact> getFactList(){
-		return this.facts;
+		if(this.facts != null){
+			return this.facts;
+		}
+		return new ArrayList<Fact>();
 	}
 
 	/**
@@ -91,7 +94,10 @@ public class DatalogProgram implements Runnable {
 	 * @return a reference to a List<Rule>
 	 */
 	public List<Rule> getRuleList(){
-		return this.rules;
+		if(this.rules != null){
+			return this.rules;
+		}
+		return new ArrayList<Rule>();
 	}
 
 	/**
