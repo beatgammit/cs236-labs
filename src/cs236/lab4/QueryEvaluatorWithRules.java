@@ -30,12 +30,17 @@ import cs236.lab2.Rule;
 import cs236.lab3.QueryEvaluator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  *
  * @author T. Jameson Little
  */
 public class QueryEvaluatorWithRules extends QueryEvaluator {
+	// this way we don't have to evaluate the same rules over and over again
+	private SortedSet<Predicate> falseRules = new TreeSet<Predicate>();
+	private SortedSet<Predicate> trueRules = new TreeSet<Predicate>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
@@ -55,12 +60,51 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 			List<Predicate> solutions = new ArrayList<Predicate>();
 			// duplicate the Rule so we don't do anything stupid
 			Rule tDuplicate = tRule.duplicate();
+			// this will assign values to all identifiers in the Rule
 			if(unify(tQuery, tDuplicate)){
 				tDuplicate.propagateBoundVariables();
+
+				// now let's worry about the predicates
+				SortedSet<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
+				Parameter[] tParamArray = freeVariables.toArray(new Parameter[freeVariables.size()]);
+				if(allResolve(0, tParamArray, tDuplicate.getPredicateList())){
+					return true;
+				}
 				//for(Predicate tPred : tRule.getPredicateList()){
 				//	this.evaluateQuery(tPred);
 				//}
-				return true;// hi dude!!
+				return false;
+			}
+		}
+		return false;
+	}
+
+	private boolean allResolve(int iPos, Parameter[] freeVars, List<Predicate> predList){
+		if(iPos == freeVars.length){
+			// add it to some kind of a list
+			boolean bPass = true;
+			for(Predicate predicate : predList){
+				for(Parameter p : freeVars){
+					predicate.bind(p.getName(), p.getValue());
+				}
+				if(!factExists(predicate) && !validateUsingRules(predicate)){
+					bPass = false;
+					break;
+				}
+
+				// it isn't really necessary to set all of these to null, that will just take time
+//				for(Parameter p : freeVars){
+//					predicate.bind(p.getName(), null);
+//				}
+			}
+			return bPass;
+		}else{
+			for(String s : this.getDomain()){
+				Parameter tQueryParam = freeVars[iPos];
+				tQueryParam.setValue(s);
+				if(allResolve(iPos + 1, freeVars, predList)){
+					return true;
+				}
 			}
 		}
 		return false;

@@ -21,8 +21,11 @@
 
 package cs236.lab2;
 
+import cs236.lab1.TokenType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * A Rule is a Predicate with a list of Predicates.
@@ -56,6 +59,18 @@ public class Rule extends Predicate{
 	 */
 	public List<Predicate> getPredicateList(){
 		return this.predicateList;
+	}
+
+	public SortedSet<Parameter> getSetOfUnboundParameters(){
+		SortedSet<Parameter> tSet = new TreeSet<Parameter>();
+		for(Predicate p : this.getPredicateList()){
+			for(Parameter tParam : p){
+				if(tParam.getTokenType() == TokenType.IDENT && tParam.getValue() == null){
+					tSet.add(tParam.duplicate());
+				}
+			}
+		}
+		return tSet;
 	}
 
 	/**

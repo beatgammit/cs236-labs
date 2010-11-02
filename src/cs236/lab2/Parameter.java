@@ -28,7 +28,7 @@ import cs236.lab1.TokenType;
  * If it's an Identifier, this class can also be used to store temporary values in evaluation.
  * @author jameson
  */
-public class Parameter {
+public class Parameter implements Comparable<Parameter>{
 	private String value;
 	private String name;
 
@@ -147,9 +147,19 @@ public class Parameter {
 	 */
 	@Override
 	public String toString(){
-		if(this.getTokenType() == TokenType.STRING)
+		if(this.getValue() != null)
 			return String.format("'%s'", this.getValue());
 		else
 			return this.getName();
+	}
+
+	public int compareTo(Parameter o) {
+		if(this.getValue() != null && o.getValue() != null){
+			return this.getValue().compareTo(o.getValue());
+		}else if(this.getName() != null && o.getName() != null){
+			return this.getName().compareTo(o.getName());
+		}else{
+			return this.getTokenType() == TokenType.STRING ? -1 : 1;
+		}
 	}
 }
