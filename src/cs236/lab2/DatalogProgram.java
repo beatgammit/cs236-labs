@@ -23,7 +23,6 @@ package cs236.lab2;
 
 import cs236.lab1.Token;
 import cs236.lab1.TokenType;
-import cs236.lab3.QueryEvaluator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
