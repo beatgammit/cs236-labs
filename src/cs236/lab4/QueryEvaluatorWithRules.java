@@ -38,9 +38,7 @@ import java.util.TreeSet;
  */
 public class QueryEvaluatorWithRules extends QueryEvaluator {
 	// this way we don't have to evaluate the same rules over and over again
-	private SortedSet<Rule> truePredicates = new TreeSet<Rule>();
-	private SortedSet<Rule> failedPredicate = new TreeSet<Rule>();
-	private SortedSet<Rule> pendingRules = new TreeSet<Rule>();
+	private SortedSet<Predicate> pendingPredicates = new TreeSet<Predicate>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
@@ -63,24 +61,11 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 			if(unify(tQuery, tDuplicate)){// this will assign values to all identifiers in the Rule
 				tDuplicate.propagateBoundVariables();
 
-				if(this.failedPredicate.contains(tDuplicate)){
-					return false;
-				}else if(this.truePredicates.contains(tDuplicate)){
-					return true;
-				}else if(this.pendingRules.contains(tDuplicate)){
-					return false;
-				}
-
-				this.pendingRules.add(tDuplicate.duplicate());
-				
 				// now let's worry about the predicates
 				SortedSet<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
 				Parameter[] tParamArray = freeVariables.toArray(new Parameter[freeVariables.size()]);
 				if(allResolve(0, tParamArray, tDuplicate.getPredicateList())){
-					this.truePredicates.add(tDuplicate.duplicate());
 					return true;
-				}else{
-					this.failedPredicate.add(tDuplicate.duplicate());
 				}
 			}
 		}
@@ -95,10 +80,16 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 				for(Parameter p : freeVars){
 					predicate.bind(p.getName(), p.getValue());
 				}
+				if(pendingPredicates.contains(predicate)){
+					bPass = false;
+					break;
+				}
+				pendingPredicates.add(predicate.duplicate());
 				if(!factExists(predicate) && !validateUsingRules(predicate)){
 					bPass = false;
 					break;
 				}
+				pendingPredicates.remove(predicate);
 
 				// it isn't really necessary to set all of these to null, that will just take time
 //				for(Parameter p : freeVars){

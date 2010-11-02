@@ -55,9 +55,11 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 * @param tValue the value to bind to the Parameter
 	 */
 	public void bind(String tName, String tValue){
-		for(Parameter p : this){
-			if(p.getName().equals(tName)){
-				p.setValue(tValue);
+		if(tName != null){
+			for(Parameter p : this){
+				if(p.getName() != null && p.getName().equals(tName)){
+					p.setValue(tValue);
+				}
 			}
 		}
 	}

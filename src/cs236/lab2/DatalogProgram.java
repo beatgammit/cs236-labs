@@ -406,15 +406,15 @@ public class DatalogProgram implements Runnable {
 	public SortedSet<String> getDomain(){
 		if(this.domain == null){
 			this.domain = new TreeSet<String>();
-			for(Fact tFact : this.facts){
+			for(Fact tFact : this.getFactList()){
 				fillDomain(tFact, this.domain);
 			}
 
-			for(Rule tRule : this.rules){
+			for(Rule tRule : this.getRuleList()){
 				fillDomain(tRule, this.domain);
 			}
 
-			for(Query tQuery : this.queries){
+			for(Query tQuery : this.getQueryList()){
 				fillDomain(tQuery, this.domain);
 			}
 		}
