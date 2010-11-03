@@ -126,7 +126,7 @@ public class Predicate extends ArrayList<Parameter>{
 	 */
 	@Override
 	public int hashCode() {
-		return this.getValue().hashCode() * 2 + super.hashCode();
+		return this.value.hashCode() * 2 + super.hashCode();
 	}
 
 	/**

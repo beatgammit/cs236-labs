@@ -30,7 +30,6 @@ import cs236.lab3.QueryEvaluator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  *
