@@ -23,7 +23,9 @@ package cs236.lab2;
 
 import cs236.lab1.TokenType;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -32,7 +34,7 @@ import java.util.TreeSet;
  * A Rule is used to evaluate a Query when there are no Facts that directly satisfy a Query.
  * @author jameson
  */
-public class Rule extends Predicate implements Comparable<Predicate>{
+public class Rule extends Predicate {
 	private List<Predicate> predicateList;
 	/**
 	 * Creates a new Rule with a name and a list of Parameters.
@@ -150,11 +152,7 @@ public class Rule extends Predicate implements Comparable<Predicate>{
 	 */
 	@Override
 	public int hashCode() {
-		final int HASH_INITIAL = 5;
-		final int SALT = 59;
-		int hash = HASH_INITIAL;
-		hash = SALT * hash + (this.predicateList != null ? this.predicateList.hashCode() : 0);
-		return hash;
+		return super.hashCode();
 	}
 
 	/**
@@ -174,52 +172,5 @@ public class Rule extends Predicate implements Comparable<Predicate>{
 
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Override's Predicate's compareTo method unless the parameter passed really is a Predicate.
-	 * This allows both Rule and Predicate to have unique compareTo methods.
-	 * This method just calls compareTo(Rule) if the Predicate passed is a Rule reference.
-	 * @param o
-	 * @return 1 if greater, -1 if less than, and 0 if equal
-	 */
-	@Override
-	public int compareTo(Predicate o){
-		if(o instanceof Rule){
-			return compareTo((Rule)o);
-		}
-		return super.compareTo(o);
-	}
-
-	/**
-	 * Compares this Rule instance to another Rule instance.
-	 *
-	 * A Rule is greater than another Rule if:
-	 * - it is greater than the other according to Predicate's compareTo method
-	 * - a Predicates is greater than it's corresponding Predicate according to Predicate's compareTo
-	 * @param o the Rule to compare against this instance
-	 * @return 1 if this instance is greater, -1 if it is lesser, and 0 if they are equal
-	 */
-	public int compareTo(Rule o) {
-		if(super.compareTo(o) == 0){
-			int i = 0;
-			List<Predicate> pThisList = this.getPredicateList();
-			List<Predicate> pThatList = o.getPredicateList();
-			for(; i < pThisList.size() && i < pThatList.size(); i++){
-				Predicate pThis = pThisList.get(i);
-				Predicate pThat = pThatList.get(i);
-				if(!pThis.equals(pThat)){
-					return pThis.compareTo(pThat);
-				}
-			}
-			if(pThisList.size() > i){
-				return 1;
-			}else if(pThatList.size() > i){
-				return -1;
-			}
-			return 0;
-		}else{
-			return super.compareTo(o);
-		}
 	}
 }

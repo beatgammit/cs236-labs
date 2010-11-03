@@ -27,9 +27,10 @@ import cs236.lab2.Predicate;
 import cs236.lab2.Query;
 import cs236.lab2.Rule;
 import cs236.lab3.QueryEvaluator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  *
@@ -37,7 +38,7 @@ import java.util.TreeSet;
  */
 public class QueryEvaluatorWithRules extends QueryEvaluator {
 	// this way we don't have to evaluate the same rules over and over again
-	private SortedSet<Predicate> pendingPredicates = new TreeSet<Predicate>();
+	private Set<Predicate> pendingPredicates = new HashSet<Predicate>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
@@ -61,7 +62,7 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 				tDuplicate.propagateBoundVariables();
 
 				// now let's worry about the predicates
-				SortedSet<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
+				Set<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
 				Parameter[] tParamArray = freeVariables.toArray(new Parameter[freeVariables.size()]);
 				if(allResolve(0, tParamArray, tDuplicate.getPredicateList())){
 					return true;
@@ -76,21 +77,28 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 			// add it to some kind of a list
 			boolean bPass = true;
 			for(Predicate predicate : predList){
+				// bind everything
 				for(Parameter p : freeVars){
 					predicate.bind(p.getName(), p.getValue());
 				}
+				
+				// detect infinite recursion
 				if(pendingPredicates.contains(predicate)){
 					bPass = false;
-					pendingPredicates.remove(predicate);
+					// we want to keep this in the list until we're ready to remove it
 					break;
 				}
+
+				// add the working predicate to the list of pending predicates
 				pendingPredicates.add(predicate.duplicate());
-				if(!factExists(predicate) && !validateUsingRules(predicate)){
-					bPass = false;
-					pendingPredicates.remove(predicate);
-					break;
-				}
+
+				bPass = factExists(predicate) || validateUsingRules(predicate);
+				
+				// remove it so we don't get screwed up down the line
 				pendingPredicates.remove(predicate);
+				
+				if(!bPass)
+					return false;
 			}
 			return bPass;
 		}else{

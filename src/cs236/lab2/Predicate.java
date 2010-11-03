@@ -29,7 +29,7 @@ import java.util.ArrayList;
  * A predicate consists of a name and a list of Parameters.
  * @author jameson
  */
-public class Predicate extends ArrayList<Parameter> implements Comparable<Predicate> {
+public class Predicate extends ArrayList<Parameter>{
 	private String value;
 
 	/**
@@ -113,17 +113,8 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 */
 	@Override
 	public boolean equals(Object obj){
-		if(obj instanceof Predicate){
-			Predicate tPredicate = (Predicate)obj;
-			if(!this.getValue().equals(tPredicate.getValue()) || this.size() != tPredicate.size()){
-				return false;
-			}
-			
-			for(int i = 0; i < tPredicate.size(); i++){
-				if(!tPredicate.get(i).equals(this.get(i))){
-					return false;
-				}
-			}
+		if(this.hashCode() == obj.hashCode()){
+			return true;
 		}
 		return false;
 	}
@@ -135,11 +126,7 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 */
 	@Override
 	public int hashCode() {
-		final int HASH_INITIAL = 3;
-		final int SALT = 83;
-		int hash = HASH_INITIAL;
-		hash = SALT * hash + (this.value != null ? this.value.hashCode() : 0);
-		return hash;
+		return this.getValue().hashCode() * 2 + super.hashCode();
 	}
 
 	/**
@@ -159,36 +146,5 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 		}
 		sb.append(')');
 		return sb.toString();
-	}
-
-	/**
-	 * Compares this Predicate to another Predicate.
-	 *
-	 * A Predicate is greater than another Predicate if:
-	 * - the value of one is greater than another according to String's compareTo method
-	 * - a Parameter of one is greater than its counterpart using Parameter's compareTo method
-	 * - a Predicate has more parameters the other
-	 * @param o the Predicate to compare this Predicate to
-	 * @return 1 if this is greater, -1 if it is less than, or 0 if they are equal
-	 */
-	public int compareTo(Predicate o) {
-		if(this.getValue().equals(o.getValue())){
-			int i = 0;
-			for(; i < this.size() && i < o.size(); i++){
-				Parameter pThis = this.get(i);
-				Parameter pThat = o.get(i);
-				if(pThis.compareTo(pThat) != 0){
-					return pThis.compareTo(pThat);
-				}
-			}
-			if(this.size() > i){
-				return 1;
-			}else if(o.size() > i){
-				return -1;
-			}
-			return 0;
-		}else{
-			return this.getValue().compareTo(o.getValue());
-		}
 	}
 }

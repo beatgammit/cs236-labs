@@ -133,12 +133,10 @@ public class Parameter implements Comparable<Parameter>{
 	 */
 	@Override
 	public int hashCode() {
-		final int SALT = 79;
-		final int HASH_DEFAULT = 3;
-		int hash = HASH_DEFAULT;
-		hash = SALT * hash + (this.value != null ? this.value.hashCode() : 0);
-		hash = SALT * hash + (this.name != null ? this.name.hashCode() : 0);
-		return hash;
+		if(this.value != null){
+			return this.value.hashCode();
+		}
+		return "".hashCode();
 	}
 
 	/**
@@ -153,7 +151,7 @@ public class Parameter implements Comparable<Parameter>{
 			return this.getName();
 	}
 
-	/**
+		/**
 	 * Compares two Parameter objects.
 	 *
 	 * If both Parameters have a value or both have only a name, String's compareTo method is used.
