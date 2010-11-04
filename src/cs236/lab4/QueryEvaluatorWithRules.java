@@ -108,11 +108,11 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 		}
 
 		// if we've already evaluated this Predicate and it's true, don't evaluate it again
-		if(truePredicates.contains(tPredicate)){
-			return true;
-		}else if(falsePredicates.contains(tPredicate)){
-			return false;
-		}
+		//if(truePredicates.contains(tPredicate)){
+		//	return true;
+		//}//else if(falsePredicates.contains(tPredicate)){
+		//	return false;
+		//}
 
 		boolean bPass = true;
 
