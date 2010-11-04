@@ -31,7 +31,7 @@ import java.util.TreeSet;
  * A predicate consists of a name and a list of Parameters.
  * @author jameson
  */
-public class Predicate extends ArrayList<Parameter>{
+public class Predicate extends ArrayList<Parameter> implements Comparable<Predicate>{
 	private String value;
 
 	/**
@@ -119,6 +119,37 @@ public class Predicate extends ArrayList<Parameter>{
 			}
 		}
 		return tSet;
+	}
+
+	/**
+	 * Compares this Predicate to another Predicate.
+	 *
+	 * A Predicate is greater than another Predicate if:
+	 * - the value of one is greater than another according to String's compareTo method
+	 * - a Parameter of one is greater than its counterpart using Parameter's compareTo method
+	 * - a Predicate has more parameters the other
+	 * @param o the Predicate to compare this Predicate to
+	 * @return 1 if this is greater, -1 if it is less than, or 0 if they are equal
+	 */
+	public int compareTo(Predicate o) {
+		if(this.getValue().equals(o.getValue())){
+			int i = 0;
+			for(; i < this.size() && i < o.size(); i++){
+				Parameter pThis = this.get(i);
+				Parameter pThat = o.get(i);
+				if(pThis.compareTo(pThat) != 0){
+					return pThis.compareTo(pThat);
+				}
+			}
+			if(this.size() > i){
+				return 1;
+			}else if(o.size() > i){
+				return -1;
+			}
+			return 0;
+		}else{
+			return this.getValue().compareTo(o.getValue());
+		}
 	}
 
 	/**

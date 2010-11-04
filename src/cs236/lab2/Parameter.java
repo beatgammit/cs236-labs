@@ -151,7 +151,7 @@ public class Parameter implements Comparable<Parameter>{
 			return this.getName();
 	}
 
-		/**
+	/**
 	 * Compares two Parameter objects.
 	 *
 	 * If both Parameters have a value or both have only a name, String's compareTo method is used.

@@ -39,8 +39,8 @@ import java.util.Set;
 public class QueryEvaluatorWithRules extends QueryEvaluator {
 	// this way we don't have to evaluate the same rules over and over again
 	private Set<Predicate> pendingPredicates = new HashSet<Predicate>();
-	private Set<Predicate> truePredicates = new HashSet<Predicate>();
-	private Set<Predicate> falsePredicates = new HashSet<Predicate>();
+	private Set<Predicate> truePredicates = new TreeSet<Predicate>();
+	private Set<Predicate> falsePredicates = new TreeSet<Predicate>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
