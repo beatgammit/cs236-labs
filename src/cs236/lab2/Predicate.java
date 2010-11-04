@@ -23,6 +23,8 @@ package cs236.lab2;
 
 import cs236.lab1.TokenType;
 import java.util.ArrayList;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * A Predicate is the super class for the four Datalog types- Fact, Scheme, Rule, and Query.
@@ -103,6 +105,20 @@ public class Predicate extends ArrayList<Parameter>{
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * Returns a SortedSet of all of the free variables in this Predicate.
+	 * @return a SortedSet of Parameters
+	 */
+	public SortedSet<Parameter> getSetOfUnboundParameters(){
+		SortedSet<Parameter> tSet = new TreeSet<Parameter>();
+		for(Parameter tParam : this){
+			if(tParam.getTokenType() == TokenType.IDENT && tParam.getValue() == null){
+				tSet.add(tParam.duplicate());
+			}
+		}
+		return tSet;
 	}
 
 	/**

@@ -67,15 +67,14 @@ public class Rule extends Predicate {
 	 * Returns a SortedSet of all of the free variables in this Rule.
 	 * @return a SortedSet of Parameters
 	 */
+	@Override
 	public SortedSet<Parameter> getSetOfUnboundParameters(){
 		SortedSet<Parameter> tSet = new TreeSet<Parameter>();
+		// for lab4 this isn't ever necessary since they're all bound when this method is called
+		//tSet.addAll(super.getSetOfUnboundParameters());
 		for(Predicate p : this.getPredicateList()){
-			for(Parameter tParam : p){
-				if(tParam.getTokenType() == TokenType.IDENT && tParam.getValue() == null){
-					tSet.add(tParam.duplicate());
-				}
-			}
-		}
+			tSet.addAll(p.getSetOfUnboundParameters());
+	}
 		return tSet;
 	}
 

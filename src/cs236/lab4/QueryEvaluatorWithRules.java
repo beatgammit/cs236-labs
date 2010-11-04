@@ -27,6 +27,7 @@ import cs236.lab2.Predicate;
 import cs236.lab2.Query;
 import cs236.lab2.Rule;
 import cs236.lab3.QueryEvaluator;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +39,8 @@ import java.util.Set;
 public class QueryEvaluatorWithRules extends QueryEvaluator {
 	// this way we don't have to evaluate the same rules over and over again
 	private Set<Predicate> pendingPredicates = new HashSet<Predicate>();
+	private Set<Predicate> truePredicates = new HashSet<Predicate>();
+	private Set<Predicate> falsePredicates = new HashSet<Predicate>();
 	/**
 	 * Calls the super constructor in QueryEvaluator.
 	 * @param tQuery the Query to be evaluated
@@ -61,55 +64,78 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 				tDuplicate.propagateBoundVariables();
 
 				// now let's worry about the predicates
-				Set<Parameter> freeVariables = tDuplicate.getSetOfUnboundParameters();
-				Parameter[] tParamArray = freeVariables.toArray(new Parameter[freeVariables.size()]);
-				if(allResolve(0, tParamArray, tDuplicate.getPredicateList())){
+				boolean bPass = true;
+
+				Set<Parameter> allFree = tDuplicate.getSetOfUnboundParameters();
+				//Parameter[] allFreeArray = allFree.toArray(new Parameter[allFree.size()]);
+
+				if(recurse(0, new ArrayList<Parameter>(allFree), tDuplicate.getPredicateList()))
 					return true;
-				}
 			}
 		}
 		return false;
 	}
 
-	private boolean allResolve(int iPos, Parameter[] freeVars, List<Predicate> predList){
-		if(iPos == freeVars.length){
-			// add it to some kind of a list
-			boolean bPass = true;
-			for(Predicate predicate : predList){
-				// bind everything
-				for(Parameter p : freeVars){
-					predicate.bind(p.getName(), p.getValue());
-				}
-				
-				// detect infinite recursion
-				if(pendingPredicates.contains(predicate)){
-					bPass = false;
-					// we want to keep this in the list until we're ready to remove it
-					break;
-				}
-
-				// add the working predicate to the list of pending predicates
-				pendingPredicates.add(predicate.duplicate());
-
-				bPass = factExists(predicate) || validateUsingRules(predicate);
-				
-				// remove it so we don't get screwed up down the line
-				pendingPredicates.remove(predicate);
-				
-				if(!bPass)
-					return false;
+	private boolean recurse(int i, List<Parameter> freeVars, List<Predicate> tSet){
+		if(i == freeVars.size()){
+			Set<Parameter> tSolSet = new HashSet<Parameter>();
+			for(Parameter tParam : freeVars){
+				tSolSet.add(tParam);
 			}
-			return bPass;
+			
+			for(Predicate p : tSet){
+				if(!canResolve(tSolSet, p)){
+					return false;
+				}
+			}
+			return true;
 		}else{
 			for(String s : this.getDomain()){
-				Parameter tQueryParam = freeVars[iPos];
+				Parameter tQueryParam = freeVars.get(i);
 				tQueryParam.setValue(s);
-				if(allResolve(iPos + 1, freeVars, predList)){
+
+				if(recurse(i + 1, freeVars, tSet)){
 					return true;
 				}
 			}
+			return false;
 		}
-		return false;
+	}
+
+	private boolean canResolve(Set<Parameter> tSolution, Predicate tPredicate){
+		for(Parameter p : tSolution){
+			tPredicate.bind(p.getName(), p.getValue());
+		}
+
+		// if we've already evaluated this Predicate and it's true, don't evaluate it again
+		if(truePredicates.contains(tPredicate)){
+			return true;
+		}else if(falsePredicates.contains(tPredicate)){
+			return false;
+		}
+
+		boolean bPass = true;
+
+		// detect infinite recursion
+		if(pendingPredicates.contains(tPredicate)){
+			return false;
+		}
+
+		// add the working predicate to the list of pending predicates
+		pendingPredicates.add(tPredicate.duplicate());
+
+		bPass = factExists(tPredicate) || validateUsingRules(tPredicate);
+
+		// remove it so we don't get screwed up down the line
+		pendingPredicates.remove(tPredicate);
+
+		if(bPass){
+			truePredicates.add(tPredicate.duplicate());
+		}else{
+			falsePredicates.add(tPredicate.duplicate());
+		}
+
+		return bPass;
 	}
 
 	/**
