@@ -83,24 +83,28 @@ public class Parameter implements Comparable<Parameter>{
 	 * @return TokenType.STRING or TokenType.IDENT
 	 */
 	public TokenType getTokenType(){
+		TokenType tReturn = null;
 		if(this.getName() != null){
-			return TokenType.IDENT;
+			tReturn = TokenType.IDENT;
 		}else{
-			return TokenType.STRING;
+			tReturn = TokenType.STRING;
 		}
+		return tReturn;
 	}
 
 	/**
-	 * Duplicates this Parameter.  Note that this is a deep duplicate, so we create a new instance.
+	 * Duplicates this Parameter.  Note that this is a deep copy, so we create a new instance.
 	 * @return a duplicate of this Parameter
 	 */
 	public Parameter duplicate(){
 		String tName = null;
 		String tValue = null;
-		if(this.getName() != null)
+		if(this.getName() != null){
 			tName = new String(this.getName());
-		if(this.getValue() != null)
+		}
+		if(this.getValue() != null){
 			tValue = new String(this.getValue());
+		}
 		return new Parameter(tName, tValue);
 	}
 
@@ -114,17 +118,18 @@ public class Parameter implements Comparable<Parameter>{
 	 */
 	@Override
 	public boolean equals(Object obj){
+		boolean bReturn = false;
 		if(obj instanceof Parameter){
 			Parameter tParam = (Parameter)obj;
 
 			if(tParam.getTokenType() == TokenType.STRING){
-				return tParam.getValue().equals(this.getValue());
+				bReturn = tParam.getValue().equals(this.getValue());
 			}
 			else if(tParam.getTokenType() == TokenType.IDENT){
-				return tParam.getName().equals(this.getName());
+				bReturn = tParam.getName().equals(this.getName());
 			}
 		}
-		return false;
+		return bReturn;
 	}
 
 	/**
@@ -133,10 +138,11 @@ public class Parameter implements Comparable<Parameter>{
 	 */
 	@Override
 	public int hashCode() {
+		int iReturn = 0;
 		if(this.value != null){
-			return this.value.hashCode();
+			iReturn = this.value.hashCode();
 		}
-		return "".hashCode();
+		return iReturn;
 	}
 
 	/**
@@ -145,10 +151,13 @@ public class Parameter implements Comparable<Parameter>{
 	 */
 	@Override
 	public String toString(){
-		if(this.getValue() != null)
-			return String.format("'%s'", this.getValue());
-		else
-			return this.getName();
+		String sReturn = null;
+		if(this.getValue() != null){
+			sReturn = String.format("'%s'", this.getValue());
+		}else{
+			sReturn = this.getName();
+		}
+		return sReturn;
 	}
 
 	/**
@@ -160,12 +169,15 @@ public class Parameter implements Comparable<Parameter>{
 	 * @return 1 if this is greater than the o, -1 if this is less than o
 	 */
 	public int compareTo(Parameter o) {
+		// no instantiation because it be assigned later... what else should the default be?
+		int iReturn;
 		if(this.getValue() != null && o.getValue() != null){
-			return this.getValue().compareTo(o.getValue());
+			iReturn = this.getValue().compareTo(o.getValue());
 		}else if(this.getName() != null && o.getName() != null){
-			return this.getName().compareTo(o.getName());
+			iReturn = this.getName().compareTo(o.getName());
 		}else{
-			return this.getTokenType() == TokenType.STRING ? -1 : 1;
+			iReturn = this.getTokenType() == TokenType.STRING ? -1 : 1;
 		}
+		return iReturn;
 	}
 }

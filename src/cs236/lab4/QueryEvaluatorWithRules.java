@@ -57,6 +57,7 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 	 */
 	@Override
 	public boolean validateUsingRules(Predicate tQuery){
+		boolean bReturn = false;
 		for(Rule tRule : this.getRuleList()){
 			// duplicate the Rule so we don't do anything stupid
 			Rule tDuplicate = tRule.duplicate();
@@ -65,108 +66,131 @@ public class QueryEvaluatorWithRules extends QueryEvaluator {
 				tDuplicate.propagateBoundVariables();
 
 				// now let's worry about the predicates
-				boolean bPass = true;
-
 				Set<Parameter> allFree = tDuplicate.getSetOfUnboundParameters();
-				//Parameter[] allFreeArray = allFree.toArray(new Parameter[allFree.size()]);
-
-				if(recurse(0, new ArrayList<Parameter>(allFree), tDuplicate.getPredicateList()))
-					return true;
+				if(recurse(0, new ArrayList<Parameter>(allFree), tDuplicate.getPredicateList())){
+					bReturn = true;
+					break;
+				}
 			}
 		}
-		return false;
+		return bReturn;
 	}
 
+	/**
+	 * Recurses through the List of Parameters that represents all free variables in a Rule.
+	 * The recursion will produce every possible solution set (set of parameters).
+	 *
+	 * This method could be slow, but we will stop recursing if we find an acceptable solution set.
+	 * A solution set is acceptable if every Predicate in tSet can be evaluated to true.
+	 * @param i our position in the List of free variables
+	 * @param freeVars all possible free variables in tSet
+	 * @param tSet all Predicates to evaluate as a group
+	 * @return
+	 */
 	private boolean recurse(int i, List<Parameter> freeVars, List<Predicate> tSet){
+		boolean bReturn = false;
 		if(i == freeVars.size()){
 			Set<Parameter> tSolSet = new HashSet<Parameter>();
 			for(Parameter tParam : freeVars){
 				tSolSet.add(tParam);
 			}
-			
+
+			bReturn = true;
 			for(Predicate p : tSet){
 				if(!canResolve(tSolSet, p)){
-					return false;
+					bReturn = false;
+					break;
 				}
 			}
-			return true;
 		}else{
+			bReturn = false;
 			for(String s : this.getDomain()){
 				Parameter tQueryParam = freeVars.get(i);
 				tQueryParam.setValue(s);
 
 				if(recurse(i + 1, freeVars, tSet)){
-					return true;
+					bReturn = true;
 				}
 			}
-			return false;
 		}
+		return bReturn;
 	}
 
+	/**
+	 * Checks to see if a Predicate can resolve using a set of Parameters.
+	 * @param tSolution the set of Parameters to bind to the Predicate
+	 * @param tPredicate the Predicate to test
+	 * @return true if it can resolve, false if not
+	 */
 	private boolean canResolve(Set<Parameter> tSolution, Predicate tPredicate){
 		for(Parameter p : tSolution){
 			tPredicate.bind(p.getName(), p.getValue());
 		}
 
+		boolean bReturn;
 		// if we've already evaluated this Predicate and it's true, don't evaluate it again
-		//if(truePredicates.contains(tPredicate)){
-		//	return true;
-		//}//else if(falsePredicates.contains(tPredicate)){
-		//	return false;
-		//}
-
-		boolean bPass = true;
-
-		// detect infinite recursion
-		if(pendingPredicates.contains(tPredicate)){
-			return false;
-		}
-
-		// add the working predicate to the list of pending predicates
-		pendingPredicates.add(tPredicate.duplicate());
-
-		bPass = factExists(tPredicate) || validateUsingRules(tPredicate);
-
-		// remove it so we don't get screwed up down the line
-		pendingPredicates.remove(tPredicate);
-
-		if(bPass){
-			truePredicates.add(tPredicate.duplicate());
+		if(truePredicates.contains(tPredicate)){
+			bReturn = true;
+		}else if(falsePredicates.contains(tPredicate)){
+			bReturn = false;
 		}else{
-			falsePredicates.add(tPredicate.duplicate());
-		}
+			boolean bPass = false;
 
-		return bPass;
+			// detect infinite recursion
+			if(!pendingPredicates.contains(tPredicate)){
+				// add the working predicate to the list of pending predicates
+				pendingPredicates.add(tPredicate.duplicate());
+
+				bPass = factExists(tPredicate) || validateUsingRules(tPredicate);
+
+				// remove it so we don't get screwed up down the line
+				pendingPredicates.remove(tPredicate);
+			}
+			
+			if(bPass){
+				truePredicates.add(tPredicate.duplicate());
+			}else{
+				falsePredicates.add(tPredicate.duplicate());
+			}
+
+			bReturn = bPass;
+		}
+		return bReturn;
 	}
 
 	/**
 	 * Unifies a Predicate with a Rule.  If it fails, then it will return false.
+	 *
+	 * To successfully unify a Predicate with a Rule, the following conditions must be met:
+	 * - the name of both Predicates must be equal
+	 * - the number of Parameters must be equal
+	 * - each Parameter in the Query must be able to unify with each Parameter in the Rule's head
+	 *
+	 * A Parameter from the Query can unify with the Parameter with the Rule if:
+	 * - their values are equal (this uses the bound value) OR
+	 * - the Parameter in the Rule is an Identifier, in which case it will be bound
+	 *
+	 * This method will assume that bound variables in the Rule are there on purpose.
+	 * If you don't know what this means, then pass in a deep copy of an unmodified Rule every time.
 	 * @param tQuery the Query to unify (won't be modified)
 	 * @param tRule the Rule to unify (will be modified)
 	 * @return true if successful, false if unsuccessful
 	 */
 	private boolean unify(Predicate tQuery, Rule tRule){
-		if(tQuery.size() != tRule.size() || !tQuery.getValue().equals(tRule.getValue())){
-			return false;
-		}
-		for(int i = 0; i < tQuery.size(); i++){
+		// simple unify test; if this fails, we won't bother checking the Parameters
+		boolean bReturn = tQuery.size() == tRule.size() && tQuery.getValue().equals(tRule.getValue());
+		for(int i = 0; bReturn && i < tQuery.size(); i++){
 			Parameter tRuleParam = tRule.get(i);
 			Parameter tQueryParam = tQuery.get(i);
 
-			// if we have an identifier, check to see if we have any other similar identifiers
-			if(tRuleParam.getName() != null){
-				String tValue = tRule.findValue(tRuleParam.getName());
-				// if we have a similar Parameter, but the value doesn't match the Query param, discard
-				if(tValue != null && !tValue.equals(tQueryParam.getValue())){
-					return false;
-				}
-				tRuleParam.setValue(tQueryParam.getValue());
-			}else{
-				if(!tRuleParam.getValue().equals(tQueryParam.getValue()))
-					return false;
+			// if the Parameter has a value, compare it to the Query's Parameter, otherwise bind it
+			if(tRuleParam.getValue() != null){
+				bReturn = tRuleParam.getValue().equals(tQueryParam.getValue());
+			}else if(tRuleParam.getName() != null){
+				tRule.bind(tRuleParam.getName(), tQueryParam.getValue());
 			}
 		}
-		return true;
+		return bReturn;
 	}
 
 	/**

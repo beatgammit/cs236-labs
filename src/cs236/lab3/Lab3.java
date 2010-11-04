@@ -26,18 +26,12 @@ import cs236.lab2.DatalogProgram;
 import cs236.lab2.Query;
 import cs236.lab2.TokenizerServer;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class parses through Datalog and evaluates the Queries against the Facts in each file.
  * @author jameson
  */
 public class Lab3 {
-	private final static long WAIT_TIME = 10; // keep this pretty small, we have fast processors
-
 	/**
 	 * This parses through files containing Datalog and evaluates the Queries against the Facts.
 	 * This prints out the results to the console.
@@ -69,27 +63,11 @@ public class Lab3 {
 	 * @return a formatted String of the results of evaluation
 	 */
 	public static String evaluateQueries(DatalogProgram dp){
-		List<QueryEvaluator> qeList = new ArrayList<QueryEvaluator>();
+		StringBuilder sb = new StringBuilder();
 		for(Query q : dp.getQueryList()){
 			QueryEvaluator qe = new QueryEvaluator(q, dp);
-			qeList.add(qe);
 			qe.run();
 
-			// start the thread so we can move on with life
-//			Thread tThread = new Thread(qe);
-//			tThread.start();
-		}
-
-		StringBuilder sb = new StringBuilder();
-		for(QueryEvaluator qe : qeList){
-			// this only makes sense if we're multithreading, which might not actually buy us much
-			while(!qe.isFinished()){
-				try {
-					Thread.sleep(WAIT_TIME);
-				} catch (InterruptedException ex) {
-					Logger.getLogger(DatalogProgram.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
 			sb.append(qe.toString());
 		}
 

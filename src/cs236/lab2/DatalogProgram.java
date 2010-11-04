@@ -26,6 +26,7 @@ import cs236.lab1.TokenType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,7 +49,7 @@ public class DatalogProgram implements Runnable {
 	private SortedSet<String> domain;
 
 	private Queue<Token> tTokenQueue;
-	private Token offendingToken;
+	private String errorString;
 	private TokenizerServer tokenizerServer;
 
 	/**
@@ -64,7 +65,7 @@ public class DatalogProgram implements Runnable {
 		this.domain = null;
 
 		this.tTokenQueue = new ConcurrentLinkedQueue<Token>();
-		this.offendingToken = null;
+		this.errorString = null;
 		this.tokenizerServer = null;
 	}
 
@@ -82,30 +83,34 @@ public class DatalogProgram implements Runnable {
 	 * @return a reference to a List<Fact>
 	 */
 	public List<Fact> getFactList(){
-		if(this.facts != null){
-			return this.facts;
-		}
-		return new ArrayList<Fact>();
+		return this.facts;
 	}
 
 	/**
 	 * Gets the list of Rule objects associated with this DatalogProgram.
 	 * This returns the reference to the List, not a copy.
-	 * @return a reference to a List<Rule>
+	 * @return a reference to a List of Rule objects
 	 */
 	public List<Rule> getRuleList(){
-		if(this.rules != null){
-			return this.rules;
-		}
-		return new ArrayList<Rule>();
+		return this.rules;
 	}
 
 	/**
 	 * Gets the List of Query objects associated with this DatalogProgram.
-	 * @return a List of Query objects
+	 * This returns the reference to the List, not a copy.
+	 * @return a reference to a List of Query objects
 	 */
 	public List<Query> getQueryList(){
 		return this.queries;
+	}
+
+	/**
+	 * Gets the List of Scheme objects associated with this DatalogProgram.
+	 * This returns the reference to the List, not a copy.
+	 * @return a reference to a List of Scheme objects
+	 */
+	public List<Scheme> getSchemeList(){
+		return this.schemes;
 	}
 
 	/**
@@ -122,13 +127,13 @@ public class DatalogProgram implements Runnable {
 	@Override
 	public void run() {
 		this.processDatalog();
-		if(this.tokenizerServer != null)
+		if(this.tokenizerServer != null){
 			this.tokenizerServer.stopParsing();
+		}
 	}
 
-	private void throwError(Token tToken){
-		this.offendingToken = tToken;
-		throw new IllegalStateException();
+	private String getErrorMessage(Token tToken){
+		return String.format("Failure!\n  %s\n", tToken.toString());
 	}
 
 	/**
@@ -144,10 +149,11 @@ public class DatalogProgram implements Runnable {
 
 			Token tToken = getNextToken();
 			if(tToken.getTokenType() != TokenType.EOF){
-				this.throwError(tToken);
+				throw new IllegalStateException(getErrorMessage(tToken));
 			}
 		}catch(IllegalStateException ex){
 			// This error serves little more purpose than to stop parsing in case of an error.
+			this.errorString = ex.getMessage();
 		}
 	}
 
@@ -167,13 +173,17 @@ public class DatalogProgram implements Runnable {
 					processScheme();
 				}
 			}else{
-				this.throwError(tToken);
+				throw new IllegalStateException(getErrorMessage(tToken));
 			}
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Parses a Scheme and adds it to the List.  A Scheme has this schema:
+	 * <Predicate>
+	 */
 	private void processScheme(){
 		Predicate tPredicate = processPredicate();
 		Scheme tScheme = new Scheme(tPredicate.getValue(), tPredicate);
@@ -193,13 +203,17 @@ public class DatalogProgram implements Runnable {
 					processFact();
 				}
 			}else{
-				this.throwError(tToken);
+				throw new IllegalStateException(getErrorMessage(tToken));
 			}
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Parses a Fact and adds it to the List.  A Fact follows this schema:
+	 * <Predicate>.
+	 */
 	private void processFact(){
 		Predicate tPredicate = processPredicate();
 
@@ -209,10 +223,13 @@ public class DatalogProgram implements Runnable {
 			Fact tFact = new Fact(tPredicate.getValue(), tPredicate);
 			this.facts.add(tFact);
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Gets the Rules.  There must be a Rules section, but there doesn't have to be any Rules.
+	 */
 	private void processRules(){
 		Token tToken = this.getNextToken();
 		if(tToken.getTokenType() == TokenType.RULES){
@@ -223,13 +240,17 @@ public class DatalogProgram implements Runnable {
 					processRule();
 				}
 			}else{
-				this.throwError(tToken);
+				throw new IllegalStateException(getErrorMessage(tToken));
 			}
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Parses a Rule and adds it to the List.  A Rule follows this schema:
+	 * <Predicate>:-<PredicateList>.
+	 */
 	private void processRule(){
 		Predicate tPredicate = processPredicate();
 
@@ -238,7 +259,7 @@ public class DatalogProgram implements Runnable {
 		// Make sure we have a colon-dash, again, kind of a checkstyle hack
 		Token tToken = this.getNextToken();
 		if(tToken.getTokenType() != TokenType.COLON_DASH){
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 		processPredicateList(tRule);
 
@@ -247,10 +268,13 @@ public class DatalogProgram implements Runnable {
 		if(tToken.getTokenType() == TokenType.PERIOD){
 			this.rules.add(tRule);
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Gets the Queries.  There must be a Queries section and at least one Query.
+	 */
 	private void processQueries(){
 		Token tToken = this.getNextToken();
 		if(tToken.getTokenType() == TokenType.QUERIES){
@@ -262,13 +286,17 @@ public class DatalogProgram implements Runnable {
 					processQuery();
 				}
 			}else{
-				this.throwError(tToken);
+				this.getErrorMessage(tToken);
 			}
 		}else{
-			this.throwError(tToken);
+			this.getErrorMessage(tToken);
 		}
 	}
 
+	/**
+	 * Parses a Query and adds it to the List.  A Query follows this schema:
+	 * <Predicate>?
+	 */
 	private void processQuery(){
 		Predicate tPredicate = processPredicate();
 		Query tQuery = new Query(tPredicate.getValue(), tPredicate);
@@ -279,10 +307,14 @@ public class DatalogProgram implements Runnable {
 			// we passed all of the checks on this Query, let's add it to the list
 			this.queries.add(tQuery);
 		}else{
-			this.throwError(tToken);
+			this.getErrorMessage(tToken);
 		}
 	}
 
+	/**
+	 * Gets a List of Predicates and adds them to the Rule.  There must be at least one Predicate.
+	 * @param tRule
+	 */
 	private void processPredicateList(Rule tRule){
 		tRule.addPredicate(processPredicate());
 		while(peekNextToken().getTokenType() == TokenType.COMMA){
@@ -291,6 +323,11 @@ public class DatalogProgram implements Runnable {
 		}
 	}
 
+	/**
+	 * Parses and returns a Predicate.  A Predicate follows this schema:
+	 * <Identifier>(<ParameterList>)
+	 * @return the Predicate
+	 */
 	private Predicate processPredicate(){
 		Token tToken = this.getNextToken();
 		if(tToken.getTokenType() == TokenType.IDENT){
@@ -308,12 +345,15 @@ public class DatalogProgram implements Runnable {
 			if(bReturnMe){
 				return tPredicate;
 			}
-
 		}
-		this.throwError(tToken);
-		return null;
+		throw new IllegalStateException(getErrorMessage(tToken));
 	}
 
+	/**
+	 * Gets the List of Parameters and adds them to the List.  There must be at least one Parameter.
+	 * A Parameter must be either an Identifier or a String.
+	 * @param targetList the List to add the Parameters to
+	 */
 	private void processParamList(List<Parameter> targetList){
 		Token tToken = this.getNextToken();
 		if(tToken.getTokenType() == TokenType.STRING || tToken.getTokenType() == TokenType.IDENT){
@@ -325,34 +365,46 @@ public class DatalogProgram implements Runnable {
 				processParamList(targetList);
 			}
 		}else{
-			this.throwError(tToken);
+			throw new IllegalStateException(getErrorMessage(tToken));
 		}
 	}
 
+	/**
+	 * Gets the next Token.  This will pop it from the Queue.  This method is Thread safe.
+	 * @return the next Token
+	 */
 	private synchronized Token getNextToken(){
+		Token tReturn = null;
 		try {
 			while(this.tTokenQueue.isEmpty()){
 				// wait for a notify()
 				Thread.sleep(WAIT_TIME);
 			}
-			return this.tTokenQueue.poll();
+			tReturn = this.tTokenQueue.poll();
 		} catch (InterruptedException ex) {
 			Logger.getLogger(DatalogProgram.class.getName()).log(Level.SEVERE, null, ex);
-			return null;
 		}
+		return tReturn;
 	}
 
+	/**
+	 * Peeks at the next token in the List.  This will not remove the Token from the List.
+	 *
+	 * This is synchronized, so it is Thread safe.
+	 * @return the next Token
+	 */
 	private synchronized Token peekNextToken(){
+		Token tReturn = null;
 		try {
 			while(this.tTokenQueue.isEmpty()){
 				// wait for a notify()
 				this.wait(WAIT_TIME);
 			}
-			return this.tTokenQueue.peek();
+			tReturn = this.tTokenQueue.peek();
 		} catch (InterruptedException ex) {
 			Logger.getLogger(DatalogProgram.class.getName()).log(Level.SEVERE, null, ex);
-			return null;
 		}
+		return tReturn;
 	}
 
 	/**
@@ -361,29 +413,32 @@ public class DatalogProgram implements Runnable {
 	 */
 	@Override
 	public String toString(){
-		final String NEWLINE = System.getProperty("line.separator");
+		String sReturn = null;
+		if(this.errorString != null){
+			sReturn = this.errorString;
+		}else{
+			final String NEWLINE = System.getProperty("line.separator");
 
-		StringBuilder sb = new StringBuilder();
-		if(this.offendingToken == null){
+			StringBuilder sb = new StringBuilder();
 			sb.append("Success!").append(NEWLINE);
 
-			sb.append(String.format("Schemes(%d):", this.schemes.size())).append(NEWLINE);
-			for(Scheme tScheme : this.schemes){
+			sb.append(String.format("Schemes(%d):", this.getSchemeList().size())).append(NEWLINE);
+			for(Scheme tScheme : this.getSchemeList()){
 				sb.append("  ").append(tScheme.toString()).append(NEWLINE);
 			}
 
-			sb.append(String.format("Facts(%d):", this.facts.size())).append(NEWLINE);
-			for(Fact tFact : this.facts){
+			sb.append(String.format("Facts(%d):", this.getFactList().size())).append(NEWLINE);
+			for(Fact tFact : this.getFactList()){
 				sb.append("  ").append(tFact.toString()).append(NEWLINE);
 			}
 
-			sb.append(String.format("Rules(%d):", this.rules.size())).append(NEWLINE);
-			for(Rule tRule : this.rules){
+			sb.append(String.format("Rules(%d):", this.getRuleList().size())).append(NEWLINE);
+			for(Rule tRule : this.getRuleList()){
 				sb.append("  ").append(tRule.toString()).append(NEWLINE);
 			}
 
-			sb.append(String.format("Queries(%d):", this.queries.size())).append(NEWLINE);
-			for(Query tQuery : this.queries){
+			sb.append(String.format("Queries(%d):", this.getQueryList().size())).append(NEWLINE);
+			for(Query tQuery : this.getQueryList()){
 				sb.append("  ").append(tQuery.toString()).append(NEWLINE);
 			}
 
@@ -391,11 +446,9 @@ public class DatalogProgram implements Runnable {
 			for(String s : this.getDomain()){
 				sb.append("  ").append('\'').append(s).append('\'').append(NEWLINE);
 			}
-		}else{
-			sb.append("Failure!").append(NEWLINE);
-			sb.append("  ").append(this.offendingToken.toString()).append(NEWLINE);
+			sReturn = sb.toString();
 		}
-		return sb.toString();
+		return sReturn;
 	}
 
 	/**
@@ -421,7 +474,13 @@ public class DatalogProgram implements Runnable {
 		return this.domain;
 	}
 
-	private void fillDomain(Predicate tPredicate, SortedSet<String> tDomain){
+	/**
+	 * Adds the values of all Parameters with String values to the domain.
+	 * This method doesn't force you to use a SortedSet for your domain, but you probably should.
+	 * @param tPredicate the Predicate to extract domain values from
+	 * @param tDomain a reference to a Set representing the domain
+	 */
+	private void fillDomain(Predicate tPredicate, Set<String> tDomain){
 		for(Parameter p : tPredicate){
 			if(p.getTokenType() == TokenType.STRING){
 				tDomain.add(p.getValue());

@@ -83,12 +83,14 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 * @return the number of Identifiers in this Predicate
 	 */
 	public boolean hasIdentifiers(){
+		boolean bReturn = false;
 		for(Parameter p : this){
 			if(p.getTokenType() == TokenType.IDENT){
-				return true;
+				bReturn = true;
+				break;
 			}
 		}
-		return false;
+		return bReturn;
 	}
 
 	/**
@@ -98,13 +100,15 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 * @return the index of the similar Parameter or -1 if nothing was found.
 	 */
 	public int findSimilar(Parameter tParam){
+		int iReturn = -1;
 		for(int i = 0; i < this.size(); i++){
 			Parameter p = this.get(i);
 			if(tParam != p && p.equals(tParam)){
-				return i;
+				iReturn = i;
+				break;
 			}
 		}
-		return -1;
+		return iReturn;
 	}
 
 	/**
@@ -132,24 +136,25 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 * @return 1 if this is greater, -1 if it is less than, or 0 if they are equal
 	 */
 	public int compareTo(Predicate o) {
-		if(this.getValue().equals(o.getValue())){
-			int i = 0;
-			for(; i < this.size() && i < o.size(); i++){
+		int iReturn = this.getValue().compareTo(o.getValue());
+		// if the names are the same, we'll have to be more clever
+		if(iReturn == 0){
+			for(int i = 0; i < this.size() && i < o.size(); i++){
 				Parameter pThis = this.get(i);
 				Parameter pThat = o.get(i);
 				if(pThis.compareTo(pThat) != 0){
 					return pThis.compareTo(pThat);
 				}
 			}
-			if(this.size() > i){
-				return 1;
-			}else if(o.size() > i){
-				return -1;
+
+			// if the Parameters are all the same, we still have to differentiate them
+			if(this.size() == o.size()){
+				iReturn = 0;
+			}else{
+				iReturn = this.size() > o.size() ? 1 : -1;
 			}
-			return 0;
-		}else{
-			return this.getValue().compareTo(o.getValue());
 		}
+		return iReturn;
 	}
 
 	/**
@@ -160,10 +165,13 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 	 */
 	@Override
 	public boolean equals(Object obj){
-		if(this.hashCode() == obj.hashCode()){
-			return true;
+		boolean bReturn = false;
+		if(obj instanceof Predicate){
+			if(this.hashCode() == obj.hashCode()){
+				bReturn = true;
+			}
 		}
-		return false;
+		return bReturn;
 	}
 
 	/**
@@ -187,8 +195,9 @@ public class Predicate extends ArrayList<Parameter> implements Comparable<Predic
 		sb.append(this.getValue()).append('(');
 		boolean bFirst = true;
 		for(Parameter p : this){
-			if(!bFirst)
+			if(!bFirst){
 				sb.append(',');
+			}
 			sb.append(p.toString());
 			bFirst = false;
 		}

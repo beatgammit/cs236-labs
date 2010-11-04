@@ -70,8 +70,9 @@ public class TokenizerServer{
 
 		while(tToken.getTokenType() != TokenType.EOF){
 			if(bStop.get()){
+				// we have an error, let's stop and output the error
 				this.tokenizer.cleanUp();
-				return dp; // we have an error, let's stop and output the error
+				return dp;
 			}
 			dp.addToQueue(tToken);
 

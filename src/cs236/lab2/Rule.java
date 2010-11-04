@@ -111,35 +111,37 @@ public class Rule extends Predicate {
 	 */
 	@Override
 	public boolean equals(Object obj){
-		if(obj instanceof Rule && super.equals(obj))
+		boolean bReturn = obj instanceof Rule;
+		// make sure we have a valid Rule instance and that the heads match
+		if(bReturn && super.equals(obj))
 		{
 			Rule tRule = (Rule)obj;
-			if(tRule.predicateList.size() != this.predicateList.size()){
-				return false;
-			}
-			
-			for(int i = 0; i < this.predicateList.size(); i++){
-				if(!tRule.predicateList.get(i).equals(this.predicateList.get(i))){
-					return false;
+			if(tRule.predicateList.size() == this.predicateList.size()){
+				for(int i = 0; bReturn && i < this.predicateList.size(); i++){
+					bReturn = tRule.predicateList.get(i).equals(this.predicateList.get(i));
 				}
+			}else{
+				bReturn = false;
 			}
 		}
-		return false;
+		return bReturn;
 	}
 
 	/**
 	 * Checks to see if there are any parameters that have the same name.  If so, we return the value.
-	 * @param tParam the Parameter to compare
+	 * @param name the name to compare
 	 * @return the value of the matched Parameter or null if none found
 	 */
 	public String findValue(String name){
+		String sReturn = null;
 		for(int i = 0; i < this.size(); i++){
 			Parameter p = this.get(i);
 			if(p.getName() != null && p.getName().equals(name)){
-				return p.getValue();
+				sReturn = p.getValue();
+				break;
 			}
 		}
-		return null;
+		return sReturn;
 	}
 	/**
 	 * Override's Object's hashCode method.
@@ -159,10 +161,12 @@ public class Rule extends Predicate {
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.toString()).append(" :- ");
+		
 		boolean bFirst = true; // this prevents adding a comma after the last predicate
 		for(Predicate p : this.predicateList){
-			if(!bFirst)
+			if(!bFirst){
 				sb.append(',');
+			}
 			sb.append(p.toString());
 			bFirst = false;
 

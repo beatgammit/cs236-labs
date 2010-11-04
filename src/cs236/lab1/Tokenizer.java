@@ -110,6 +110,8 @@ public class Tokenizer {
 		try{
 			this.in.close();
 		}catch(IOException ex){
+			// this shouldn't ever happen, but we'll output the error anyway
+			System.out.print(ex);
 		}
 	}
 
@@ -132,40 +134,49 @@ public class Tokenizer {
 	/**
 	 * Gets the next character (curPos + 1) or 0 (byte value, not ASCII) if at the end of the file
 	 * @param bIncrement If false, acts like peek, if true, acts like a regular next.
-	 * @return
+	 * @return the next character
 	 */
 	private char getNextChar(boolean bIncrement, boolean bIgnoreWhitespace){
+		// about as close to null as we can get...
+		char cReturn = 0;
 		try{
-			if(!bIncrement){
+			if(bIncrement){
+				if(bNextCharWorks){
+					this.curChar = this.nextChar;
+					this.bNextCharWorks = false;
+				}else{
+					this.curChar = (char)in.read();
+				}
+				// hahahahaha, this was legacy code (used to spite checkstyle), so I'll keep it for fun
+				this.lineNumber = (this.curChar == NEW_LINE) ? this.lineNumber + 1 : this.lineNumber;
+
+				// if this is just whitespace, then let's get them something real
+				if(Character.isWhitespace(this.curChar) && bIgnoreWhitespace){
+					cReturn = getNextChar(bIncrement, bIgnoreWhitespace);
+				}else{
+					cReturn = this.curChar;
+				}
+			}else{
 				if(!bNextCharWorks){
 					this.nextChar = (char)in.read();
 					this.bNextCharWorks = true;
 				}
-				return nextChar;
-			}
-			if(bNextCharWorks){
-				this.curChar = this.nextChar;
-				this.bNextCharWorks = false;
-			}else{
-				this.curChar = (char)in.read();
-			}
-			// hahahahaha, this was legacy code (used to spite checkstyle), so I'll keep it for fun
-			this.lineNumber = (this.curChar == NEW_LINE) ? this.lineNumber + 1 : this.lineNumber;
-
-			// if this is just whitespace, then let's get them something real
-			if(Character.isWhitespace(this.curChar) && bIgnoreWhitespace){
-				return getNextChar(bIncrement, bIgnoreWhitespace);
+				cReturn = nextChar;
 			}
 		}catch(IOException ex){
-
+			// this really shouldn't happen, but if it does, output the error text and end the program.
+			System.out.print(ex);
+			System.exit(1);
 		}
-		return this.curChar; // about as close to null as we can get...
+		return cReturn;
 	}
 
 	/**
-	 * 
-	 * @return
-	 * @throws Exception- Message is the String up until this point
+	 * Reads a String, which is all characters from an open quote to a closing quote.
+	 * We don't store the quotes in the Token, just the TokenType.
+	 *
+	 * If we run into a line break or end of file before the closing quote, output an undefined Token.
+	 * @return a String Token or an Undefined Token.
 	 */
 	private Token readString() {
 		this.tokenData += this.getCurChar();
@@ -174,6 +185,7 @@ public class Tokenizer {
 			if(tChar != NEW_LINE && tChar != EOF){
 				this.tokenData += this.pop(false);
 			}else{
+				// this is kind of like throwing an exception, but more graceful
 				return new Token(TokenType.UNDEFINED, this.lineNumber, this.tokenData);
 			}
 
@@ -234,31 +246,32 @@ public class Tokenizer {
 	}
 
 	private Token readIdentifier(){
+		Token tReturn = null;
+
 		char tChar = this.getCurChar();
 		this.tokenData += tChar;
-		if(!isValidIdentifierChar(tChar, true)){ // must start with a letter
-			return new Token(TokenType.UNDEFINED, this.lineNumber, this.tokenData);
-		}
-
-		// identifiers can only be digits or letters
-		// don't increment increment yet so we don't miss the next token
-		while(isValidIdentifierChar(this.peek(false), false)){
-			tChar = this.pop(false);
-			this.tokenData += tChar;
-			if(isKeyword(tokenData) && !isValidIdentifierChar(this.peek(false), false)){
-				return createKeyword(tokenData, this.lineNumber);
+		
+		// must start with a letter
+		if(isValidIdentifierChar(tChar, true)){
+			// identifiers can only be digits or letters
+			// don't increment increment yet so we don't miss the next token
+			while(isValidIdentifierChar(this.peek(false), false)){
+				tChar = this.pop(false);
+				this.tokenData += tChar;
+				
+				if(isKeyword(tokenData) && !isValidIdentifierChar(this.peek(false), false)){
+					return createKeyword(tokenData, this.lineNumber);
+				}
 			}
+			tReturn = new Token(TokenType.IDENT, this.lineNumber, this.tokenData);
+		}else{
+			tReturn = new Token(TokenType.UNDEFINED, this.lineNumber, this.tokenData);
 		}
-		return new Token(TokenType.IDENT, this.lineNumber, this.tokenData);
+		return tReturn;
 	}
 
 	private static boolean isValidIdentifierChar(char tChar, boolean bFirstChar){
-		if(Character.isLetter(tChar)){
-			return true;
-		}else if(!bFirstChar && Character.isDigit(tChar)){
-			return true;
-		}
-		return false;
+		return Character.isLetter(tChar) || (!bFirstChar && Character.isDigit(tChar));
 	}
 
 	private static boolean isKeyword(String sValue){
@@ -266,19 +279,24 @@ public class Tokenizer {
 	}
 
 	private static Token createKeyword(String sValue, int iLineNumber){
+		Token tReturn = null;
 		for(TokenType t : keywords.keySet()){
 			if(keywords.get(t).equals(sValue)){
-				return new Token(t, iLineNumber, sValue);
+				tReturn = new Token(t, iLineNumber, sValue);
+				break;
 			}
 		}
-		// should never get this far since we made the checks earlier
-		return null;
+		// should never return null since we made the checks earlier
+		return tReturn;
 	}
 
+	/**
+	 * Reads and throws away the comment.
+	 */
 	private void readComment(){
-		char tChar = this.getCurChar();
+		this.getCurChar();
 		while(this.peek(false) != NEW_LINE && this.peek(false) != EOF){
-			tChar = this.pop(false);
+			this.pop(false);
 		}
 	}
 
@@ -287,33 +305,36 @@ public class Tokenizer {
 	 * @return the next Token in the file
 	 */
 	public Token getNextToken(){
+		Token tReturn = null;
+
 		char tChar = this.pop(true);
 		if(tChar == EOF){ // make sure we're not at the end
-			return new Token(TokenType.EOF, this.lineNumber, "");
-		}
-		
-		// let's start off with a clean slate; don't reallocate if we don't have to
-		tokenData = new String();
-		if(Character.isLetter(tChar)){ // Identifiers (or keywords) are complex, keep them separate
-			return readIdentifier();
-		}
+			tReturn = new Token(TokenType.EOF, this.lineNumber, "");
+		}else{
+			// let's start off with a clean slate; don't reallocate if we don't have to
+			tokenData = "";
+			if(Character.isLetter(tChar)){
+				// Identifiers (keywords) are complex, so we'll make a method to read those
+				tReturn = readIdentifier();
+			}else{
+				switch(tChar){
+					case START_OF_STRING:{
+						tReturn = this.readString();
+						break;
+					}
 
-		Token tReturn = null; // to avoid lexical complexity, let's make a return value
-		switch(tChar){
-			case START_OF_STRING:{
-				tReturn = this.readString();
-				break;
-			}
+					case COMMENT:{
+						readComment();
+						tReturn = this.getNextToken();
+						break;
+					}
 
-			case COMMENT:{
-				readComment();
-				tReturn = this.getNextToken();
-				break;
-			}
-
-			default:{ // we have to assume that it's a symbol, don't worry, we readSymbol cheecks
-				tReturn = readSymbol();
-				break;
+					default:{
+						// we have to assume that it's a symbol, don't worry, readSymbol checks
+						tReturn = readSymbol();
+						break;
+					}
+				}
 			}
 		}
 		return tReturn;

@@ -139,6 +139,7 @@ public class QueryEvaluator implements Runnable{
 	 * @return true if there is a match, false otherwise
 	 */
 	public boolean factExists(Predicate tQuery){
+		boolean bReturn = false;
 		for(Fact tFact : this.getFactList()){
 			if(tFact.getValue().equals(tQuery.getValue()) && tFact.size() == tQuery.size()){
 				boolean tMatch = true;
@@ -151,11 +152,12 @@ public class QueryEvaluator implements Runnable{
 					}
 				}
 				if(tMatch){
-					return true;
+					bReturn = true;
+					break;
 				}
 			}
 		}
-		return false;
+		return bReturn;
 	}
 
 	/**
